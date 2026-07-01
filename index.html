@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Калькулятор</title>
+    
+    <!-- PWA мета-теги -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Калькулятор">
+    <meta name="theme-color" content="#333333">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23333'/><text x='50' y='65' text-anchor='middle' font-size='50' fill='white'>🧮</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            background: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 15px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .calculator {
+            background: #333;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .display-container {
+            margin-bottom: 15px;
+        }
+
+        .operation-indicator {
+            color: #ff9500;
+            font-size: 16px;
+            height: 20px;
+            margin-bottom: 5px;
+            text-align: right;
+            padding-right: 10px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        #display {
+            width: 100%;
+            height: 70px;
+            font-size: 32px;
+            text-align: right;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background: #fff;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px 10px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #666;
+            color: white;
+            transition: all 0.15s;
+            min-height: 60px;
+            touch-action: manipulation;
+        }
+
+        button:hover {
+            background: #888;
+        }
+
+        button:active {
+            background: #555;
+            transform: scale(0.95);
+        }
+
+        .operator {
+            background: #ff9500;
+            font-weight: bold;
+        }
+
+        .operator:hover {
+            background: #ffaa33;
+        }
+
+        .operator:active {
+            background: #e68600;
+        }
+
+        .equals {
+            background: #007AFF;
+            font-weight: bold;
+        }
+
+        .equals:hover {
+            background: #3399ff;
+        }
+
+        .equals:active {
+            background: #0066d6;
+        }
+
+        .clear {
+            background: #ff3b30;
+        }
+
+        .clear:hover {
+            background: #ff6259;
+        }
+
+        .clear:active {
+            background: #d63029;
+        }
+
+        .function {
+            background: #888;
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        /* Адаптация для маленьких экранов */
+        @media (max-width: 360px) {
+            .calculator {
+                padding: 15px;
+                border-radius: 15px;
+            }
+
+            button {
+                padding: 15px 8px;
+                font-size: 18px;
+                min-height: 50px;
+                border-radius: 8px;
+            }
+
+            #display {
+                height: 60px;
+                font-size: 28px;
+            }
+
+            .buttons {
+                gap: 8px;
+            }
+        }
+
+        @media (min-width: 361px) and (max-width: 480px) {
+            .calculator {
+                padding: 18px;
+            }
+
+            button {
+                padding: 18px 10px;
+                font-size: 19px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display-container">
+            <div class="operation-indicator" id="operationIndicator"></div>
+            <input type="text" id="display" readonly value="0">
+        </div>
+        
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="function" onclick="deleteLast()">⌫</button>
+            <button class="function" onclick="calculatePercent()">%</button>
+            <button class="operator" onclick="appendOperator('/')">÷</button>
+            
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="appendOperator('*')">×</button>
+            
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="appendOperator('-')">−</button>
+            
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            
+            <button class="zero" onclick="appendNumber('0')">0</button>
+            <button onclick="appendNumber('.')">.</button>
+            <button class="equals" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let operationIndicator = document.getElementById('operationIndicator');
+        let currentInput = '0';
+        let operator = null;
+        let previousInput = null;
+        let shouldResetDisplay = false;
+        let justCalculated = false;
+
+        function updateDisplay() {
+            display.value = currentInput;
+            updateOperationIndicator();
+        }
+
+        function updateOperationIndicator() {
+            if (justCalculated) {
+                // Показываем предыдущий пример с результатом
+                if (operator !== null && previousInput !== null) {
+                    let symbol = '';
+                    switch(operator) {
+                        case '+': symbol = '+'; break;
+                        case '-': symbol = '−'; break;
+                        case '*': symbol = '×'; break;
+                        case '/': symbol = '÷'; break;
+                    }
+                    operationIndicator.textContent = previousInput + ' ' + symbol + ' ' + currentInput + ' =';
+                }
+            } else if (operator !== null && previousInput !== null) {
+                let symbol = '';
+                switch(operator) {
+                    case '+': symbol = '+'; break;
+                    case '-': symbol = '−'; break;
+                    case '*': symbol = '×'; break;
+                    case '/': symbol = '÷'; break;
+                }
+                operationIndicator.textContent = previousInput + ' ' + symbol;
+            } else {
+                operationIndicator.textContent = '';
+            }
+        }
+
+        function appendNumber(number) {
+            if (shouldResetDisplay) {
+                currentInput = '0';
+                shouldResetDisplay = false;
+            }
+            
+            if (justCalculated) {
+                // Если только что посчитали и начинаем вводить новое число
+                justCalculated = false;
+                operationIndicator.textContent = '';
+            }
+
+            if (number === '.') {
+                if (currentInput.includes('.')) return;
+                currentInput += '.';
+            } else {
+                if (currentInput === '0' && number !== '.') {
+                    currentInput = number;
+                } else {
+                    // Ограничение длины для телефона
+                    if (currentInput.replace(/[.-]/g, '').length >= 12) return;
+                    currentInput += number;
+                }
+            }
+            
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (justCalculated) {
+                // Если только что посчитали и нажимаем оператор, используем результат
+                justCalculated = false;
+                previousInput = currentInput;
+                operator = op;
+                shouldResetDisplay = true;
+                updateDisplay();
+                return;
+            }
+
+            if (operator !== null && !shouldResetDisplay) {
+                calculate();
+            }
+
+            previousInput = currentInput;
+            operator = op;
+            shouldResetDisplay = true;
+            updateOperationIndicator();
+        }
+
+        function calculatePercent() {
+            if (currentInput === '0' || currentInput === '') return;
+
+            let current = parseFloat(currentInput);
+            if (isNaN(current)) return;
+
+            if (previousInput !== null && operator !== null) {
+                let previous = parseFloat(previousInput);
+                if (!isNaN(previous)) {
+                    // Процент от предыдущего числа
+                    let percentValue = previous * current / 100;
+                    currentInput = percentValue.toString();
+                }
+            } else {
+                // Просто процент
+                currentInput = (current / 100).toString();
+            }
+
+            shouldResetDisplay = true;
+            justCalculated = false;
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (operator === null || shouldResetDisplay || previousInput === null) {
+                return;
+            }
+
+            let result;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+
+            if (isNaN(prev) || isNaN(current)) return;
+
+            // Сохраняем для отображения
+            let savedPrevious = previousInput;
+            let savedOperator = operator;
+            let savedCurrent = currentInput;
+
+            switch (operator) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    if (current === 0) {
+                        alert('Ошибка: деление на ноль');
+                        clearDisplay();
+                        return;
+                    }
+                    result = prev / current;
+                    break;
+                default:
+                    return;
+            }
+
+            // Округление для избежания проблем с плавающей точкой
+            result = Math.round(result * 1000000000000) / 1000000000000;
+            
+            // Показываем пример с результатом
+            let symbol = '';
+            switch(savedOperator) {
+                case '+': symbol = '+'; break;
+                case '-': symbol = '−'; break;
+                case '*': symbol = '×'; break;
+                case '/': symbol = '÷'; break;
+            }
+            operationIndicator.textContent = savedPrevious + ' ' + symbol + ' ' + savedCurrent + ' =';
+            
+            currentInput = result.toString();
+            operator = null;
+            previousInput = null;
+            shouldResetDisplay = true;
+            justCalculated = true;
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            operator = null;
+            previousInput = null;
+            shouldResetDisplay = false;
+            justCalculated = false;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (shouldResetDisplay || justCalculated) return;
+            
+            if (currentInput.length === 1 || 
+                (currentInput.length === 2 && currentInput.startsWith('-'))) {
+                currentInput = '0';
+            } else {
+                currentInput = currentInput.slice(0, -1);
+            }
+            
+            updateDisplay();
+        }
+
+        // Вибрация при нажатии (для мобильных)
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', () => {
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+            });
+        });
+
+        // Предотвращение масштабирования при двойном тапе на мобильных
+        document.addEventListener('dblclick', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                e.preventDefault();
+            }
+        }, {passive: false});
+
+        // Поддержка клавиатуры
+        document.addEventListener('keydown', function(event) {
+            if (event.key >= '0' && event.key <= '9') {
+                appendNumber(event.key);
+            } else if (event.key === '.') {
+                appendNumber('.');
+            } else if (event.key === '+') {
+                appendOperator('+');
+            } else if (event.key === '-') {
+                appendOperator('-');
+            } else if (event.key === '*') {
+                appendOperator('*');
+            } else if (event.key === '/') {
+                appendOperator('/');
+            } else if (event.key === '%') {
+                calculatePercent();
+            } else if (event.key === 'Enter' || event.key === '=') {
+                calculate();
+            } else if (event.key === 'Backspace') {
+                deleteLast();
+            } else if (event.key === 'Escape') {
+                clearDisplay();
+            }
+        });
+
+        // Регистрация Service Worker для PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker зарегистрирован');
+                    })
+                    .catch(err => {
+                        console.log('Service Worker не зарегистрирован:', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
